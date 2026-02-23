@@ -1,0 +1,7 @@
+*.png
+*.jpg
+*.jpeg
+screenshots/
+.DS_Store
+Thumbs.db
+Desktop.ini

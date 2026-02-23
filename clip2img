@@ -1,0 +1,27 @@
+#!/bin/bash
+# clip2img - Save Windows clipboard image to a PNG file from WSL
+# Usage: clip2img [output_path]
+
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+IMGDIR="/tmp/screenshots"
+mkdir -p "$IMGDIR"
+
+IMGPATH="${1:-${IMGDIR}/clip_${TIMESTAMP}.png}"
+WIN_PATH=$(wslpath -w "$IMGPATH")
+
+RESULT=$(powershell.exe -NoProfile -Command "
+Add-Type -AssemblyName System.Windows.Forms
+\$img = [System.Windows.Forms.Clipboard]::GetImage()
+if (\$img -ne \$null) {
+    \$img.Save('${WIN_PATH}')
+    Write-Output 'OK'
+} else {
+    Write-Output 'NOIMG'
+}" 2>/dev/null | tr -d '\r')
+
+if [ "$RESULT" = "OK" ]; then
+    echo "$IMGPATH"
+else
+    echo "No image in clipboard" >&2
+    exit 1
+fi
