@@ -41,23 +41,28 @@ else
     echo "  Done."
 fi
 
-# 4. Create startup shortcut
-echo "[4/4] Creating startup shortcut..."
+# 4. Create scheduled task (runs elevated, no UAC prompt)
+echo "[4/4] Creating scheduled task..."
+WIN_AHK_PATH=$( wslpath -w "$AHK_PATH" )
+# Supprimer l'ancien raccourci startup s'il existe
 powershell.exe -NoProfile -Command "
-\$startup = [Environment]::GetFolderPath('Startup')
-\$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut(\"\$startup\\clip2claude.lnk\")
-\$shortcut.TargetPath = '$( wslpath -w "$AHK_PATH" )'
-\$shortcut.Arguments = '${WIN_SCRIPTS}\\clip2claude.ahk'
-\$shortcut.WorkingDirectory = '${WIN_SCRIPTS}'
-\$shortcut.Description = 'Clipboard to Claude Code (ALT+V)'
-\$shortcut.Save()
+Remove-Item \"\$([Environment]::GetFolderPath('Startup'))\clip2claude.lnk\" -ErrorAction SilentlyContinue
+" 2>/dev/null
+# Créer la tâche planifiée avec privilèges élevés
+powershell.exe -NoProfile -Command "
+Unregister-ScheduledTask -TaskName 'clip2claude' -Confirm:\$false -ErrorAction SilentlyContinue
+\$action = New-ScheduledTaskAction -Execute '${WIN_AHK_PATH}' -Argument '${WIN_SCRIPTS}\\clip2claude.ahk' -WorkingDirectory '${WIN_SCRIPTS}'
+\$trigger = New-ScheduledTaskTrigger -AtLogOn -User '${WIN_USER}'
+\$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit 0
+\$principal = New-ScheduledTaskPrincipal -UserId '${WIN_USER}' -RunLevel Highest -LogonType Interactive
+Register-ScheduledTask -TaskName 'clip2claude' -Action \$action -Trigger \$trigger -Settings \$settings -Principal \$principal -Description 'Clipboard to Claude Code (ALT+V)' -Force
 " 2>&1 | tr -d '\r'
 echo "  Done."
 
 # 5. Launch
 echo ""
 echo "Launching clip2claude..."
-powershell.exe -NoProfile -Command "Start-Process '$( wslpath -w "$AHK_PATH" )' -ArgumentList '${WIN_SCRIPTS}\\clip2claude.ahk'" 2>&1 | tr -d '\r'
+powershell.exe -NoProfile -Command "Start-Process '$WIN_AHK_PATH' -ArgumentList '${WIN_SCRIPTS}\\clip2claude.ahk'" 2>&1 | tr -d '\r'
 
 echo ""
 echo "=== Installation complete ==="

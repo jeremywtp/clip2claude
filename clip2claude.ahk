@@ -1,6 +1,12 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 
+; Permet d'envoyer des frappes aux terminaux lances en administrateur
+if !A_IsAdmin {
+    try Run("*RunAs " A_ScriptFullPath)
+    ExitApp
+}
+
 ; ALT+V - Paste a clipboard screenshot path into a WSL terminal
 ; Works with Windows Terminal and Cursor
 

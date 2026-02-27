@@ -104,8 +104,8 @@ rm ~/.local/bin/clip2img
 # Remove Windows scripts
 rm -rf /mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')/scripts/clip2claude.*
 
-# Remove startup shortcut
-powershell.exe -Command "Remove-Item \"$([Environment]::GetFolderPath('Startup'))\clip2claude.lnk\" -ErrorAction SilentlyContinue"
+# Remove scheduled task
+powershell.exe -Command "Unregister-ScheduledTask -TaskName 'clip2claude' -Confirm:\$false -ErrorAction SilentlyContinue"
 
 # Optionally uninstall AutoHotkey
 powershell.exe -Command "winget uninstall AutoHotkey.AutoHotkey"
